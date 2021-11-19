@@ -1,0 +1,18 @@
+GET http://127.0.0.1:3000/register HTTP/1.1
+
+
+###
+POST sms.tencentcloudapi.com HTTP/1.1
+Content-Type: application/json
+X-TC-Action: SendSms
+
+{
+    "Action": "SendSms",
+    "version": "2019-07-11",
+    "PhoneNumberSet": [
+        "+8617819827791"
+    ],
+    "SmsSdkAppId": "1400598104",
+    "SignName": "平南县别样传媒工作室",
+    "TemplateId": "420464",
+}

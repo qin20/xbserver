@@ -1,0 +1,30 @@
+{
+    "extends": [
+        "google"
+    ],
+    "ignorePatterns": ["views", "renders"],
+    "env": {
+        "node": true,
+        "commonjs": true,
+        "es6": true
+    },
+    "parserOptions": {
+        "sourceType": "module",
+        "ecmaVersion": 11,
+        "ecmaFeatures": {
+            "experimentalObjectRestSpread": true,
+            "spread": true,
+            "arrowFunctions": true
+        }
+    },
+    "rules": {
+        "new-cap": ["error", { "capIsNew": false }],
+        "no-unused-vars": "error",
+        "no-undef": "error",
+        "indent": ["error", 4],
+        "require-jsdoc": "off",
+        "max-len": ["error", { "ignoreStrings": true, "ignoreTemplateLiterals": true }],
+        "operator-linebreak": ["error", "before"],
+        "valid-jsdoc": "off"
+    }
+}
