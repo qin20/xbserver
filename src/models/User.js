@@ -129,11 +129,19 @@ UserCode.init({
 UserCode.sync({alter: true});
 
 class UserResource extends Model {
+    static async ensureCreate(uid) {
+        const userResource = await UserResource.findByPk(uid);
+        if (userResource) {
+            return userResource;
+        }
+        return await UserResource.create({uid});
+    }
+
     /**
      * 购买tts
      */
     static async addPayTTS(uid, amounts) {
-        const userResource = await UserResource.findByPk(uid);
+        const userResource = await UserResource.ensureCreate(uid);
 
         if (userResource) {
             return await userResource.update(
@@ -148,11 +156,11 @@ class UserResource extends Model {
      * 免费tts
      */
     static async addFreeTTS(uid, amounts) {
-        const userResource = await UserResource.findByPk(uid);
+        const userResource = await UserResource.ensureCreate(uid);
 
         if (userResource) {
             return await userResource.update(
-                {ttsPay: userResource.ttsFree + amounts},
+                {ttsFree: userResource.ttsFree + amounts},
             );
         } else {
             return await UserResource.create({uid, ttsFree: amounts});
@@ -163,7 +171,7 @@ class UserResource extends Model {
      * 消费TTS，优先消费免费TTS
      */
     static async consumeTTS(uid, amounts) {
-        const userResource = await UserResource.findByPk(uid);
+        const userResource = await UserResource.ensureCreate(uid);
 
         if (!userResource) {
             await UserResource.create({

@@ -41,12 +41,25 @@ async function sendMessageCode(phoneNumber, code) {
         ],
     };
 
-    app.log.info(`开始发送验证码: ${JSON.stringify(params)}`);
-    const resp = await client.SendSms(params);
+    app.log.info(`发送验证码: ${JSON.stringify(params)}`);
 
-    if (!resp.SendStatusSet[0].SerialNo) {
-        throw new BaseError({msg: '验证码发送失败', error: resp, status: 500});
+    let resp;
+    let error;
+    try {
+        resp = await client.SendSms(params);
+    } catch (e) {
+        error = e;
     }
+
+    if (!resp || !resp.SendStatusSet[0].SerialNo) {
+        throw new BaseError({
+            msg: '发送验证码失败',
+            error: resp || error,
+            status: 500,
+        });
+    }
+
+    app.log.info(`发送验证码成功: ${JSON.stringify(resp)}`);
 
     return true;
 }
@@ -54,7 +67,7 @@ async function sendMessageCode(phoneNumber, code) {
 async function tts(options) {
     const TtsClient = tencentcloud.tts.v20190823.Client;
 
-    const clientConfig = {
+    const client = new TtsClient({
         credential: {
             secretId,
             secretKey,
@@ -65,22 +78,44 @@ async function tts(options) {
                 endpoint: 'tts.tencentcloudapi.com',
             },
         },
-    };
-
-    const client = new TtsClient(clientConfig);
+    });
     const Volume = options.volumn && options.volumn / 10;
     const Speed = options.Speed && options.Speed / 100;
-    const VoiceType = options.voice;
+    const VoiceType = +options.voice;
     const Text = options.text;
+    const SessionId = Text;
+    const ModelType = 1;
     const params = {
         Volume,
         Speed,
         VoiceType,
         Text,
-        'SessionId': Text,
+        SessionId,
+        ModelType,
     };
 
-    return await client.TextToVoice(params);
+    app.log.info(`合成腾讯语音: ${JSON.stringify(params)}`);
+
+    let resp;
+    let error;
+    try {
+        resp = await client.TextToVoice(params);
+    } catch (e) {
+        error = e;
+    }
+
+    if (!resp || !resp.Audio) {
+        throw new BaseError({
+            msg: '合成腾讯语音失败',
+            error: resp || error,
+            status: 500,
+        });
+    }
+
+    const {Audio, ...info} = resp;
+    app.log.info(`合成腾讯语音成功: ${JSON.stringify(info)}`);
+
+    return true;
 }
 
 module.exports = {

@@ -12,7 +12,8 @@ app.post('/account/add_resource', app.loginRequired, async (request) => {
 
     if (type === 'tts') {
         validators.validateTTSAmounts(amounts);
-        return await UserResource.addPayTTS(request.user.uid, amounts);
+        const data = await UserResource.addPayTTS(request.user.uid, amounts);
+        return {msg: '购买成功', data};
     }
 });
 
@@ -22,10 +23,11 @@ app.post('/account/add_resource', app.loginRequired, async (request) => {
 app.post('/account/today', app.loginRequired, async (request) => {
     return await db.transaction(async () => {
         await UserToday.addToday(request.user.uid);
-        const amounts = Math.floor(200 + Math.random() * 1800);
-        const resource = await UserResource.addFreeTTS(
+        const amounts = Math.floor(500 + Math.random() * Math.random() * 1500);
+        const data = await UserResource.addFreeTTS(
             request.user.uid, amounts,
         );
-        return {msg: '签到成功', resource};
+        app.log.info(`签到成功: 获得ttsFree: ${amounts}`);
+        return {msg: '签到成功', data};
     });
 });

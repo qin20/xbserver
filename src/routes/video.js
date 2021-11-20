@@ -1,4 +1,4 @@
-const {UserVip} = require('../models');
+const {UserResource} = require('../models');
 const app = require('../app');
 const validators = require('../utils/validators');
 const alicloud = require('../services/alicloud');
@@ -10,7 +10,7 @@ app.get('/tts', {preValidation: [app.authenticate]}, async (request) => {
     validators.validateTTSType(type);
 
     return await db.transaction(async () => {
-        await UserVip.consume(request.user.uid, 'tts', params.text.length);
+        await UserResource.consumeTTS(request.user.uid, params.text.length);
         if (type === 'ten') {
             return await tencentcloud.tts(params);
         } else if (type === 'ali') {
