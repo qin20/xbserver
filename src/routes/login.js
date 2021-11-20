@@ -38,7 +38,7 @@ app.post('/phone_login', async (request, reply) => {
     if (valid) {
         let user = await User.findOne({where: {phone}});
         if (!user) {
-            user = User.create({phone});
+            user = await User.create({phone});
         }
         const {token: _, ...userinfo} = user.toJSON();
         const token = app.jwt.sign(userinfo);

@@ -6,6 +6,8 @@ require('./src/plugins/jwt');
 
 // routers
 require('./src/routes/login');
+require('./src/routes/account');
+require('./src/routes/video');
 
 // 接口包装
 app.setErrorHandler(require('./src/utils/errorsHandlers'));

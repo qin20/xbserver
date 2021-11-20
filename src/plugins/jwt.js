@@ -21,3 +21,5 @@ app.decorate('authenticate', async function(request, reply) {
         reply.send(new AuthenticateError({error: err}));
     }
 });
+
+app.decorate('loginRequired', {preValidation: [app.authenticate]});

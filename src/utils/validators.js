@@ -34,7 +34,40 @@ function validateVerifyCode(code, options) {
     }
 }
 
+function validateTTSType(type) {
+    if (!type) {
+        throw new ClientParamsError('缺少参数[type]');
+    }
+    const valid = ['ali', 'ten'].indexOf(type) >= 0;
+    if (!valid) {
+        throw new ClientParamsError('参数[type]错误');
+    }
+}
+
+function validateResource(type) {
+    if (!type) {
+        throw new ClientParamsError('缺少参数[type]');
+    }
+    const valid = ['tts'].indexOf(type) >= 0;
+    if (!valid) {
+        throw new ClientParamsError('参数[type]错误');
+    }
+}
+
+function validateTTSAmounts(amounts) {
+    if (!amounts) {
+        throw new ClientParamsError('缺少参数[amounts]');
+    }
+    const valid = /\d+/.test(amounts);
+    if (!valid) {
+        throw new ClientParamsError('参数[amounts]错误');
+    }
+}
+
 module.exports = {
     validatePhone,
     validateVerifyCode,
+    validateTTSType,
+    validateResource,
+    validateTTSAmounts,
 };

@@ -30,3 +30,23 @@ Content-Type: application/json
 {
     "phone": "+8617819827791"
 }
+
+### 签到
+post http://127.0.0.1:3000/account/today HTTP/1.1
+authorization: Bearer {{login.response.body.token}}
+
+
+### 充值会员
+post http://127.0.0.1:3000/account/add_resource HTTP/1.1
+Content-Type: application/json
+authorization: Bearer {{login.response.body.token}}
+
+{
+    "type": "tss",
+    "amounts": 10000
+}
+
+### 合成语音
+get http://127.0.0.1:3000/tts?type=ten&voice=1001&text=你好，我是一个创业者 HTTP/1.1
+Content-Type: application/json
+authorization: Bearer {{login.response.body.token}}

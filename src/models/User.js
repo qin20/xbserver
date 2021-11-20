@@ -1,5 +1,7 @@
+const moment = require('moment');
 const {Sequelize, DataTypes, Model} = require('sequelize');
 const db = require('./db');
+const {TTSError, TodayError} = require('../utils/errors');
 
 const User = class User extends Model {
     static async verifyPhoneToken(user, token) {
@@ -126,8 +128,68 @@ UserCode.init({
 });
 UserCode.sync({alter: true});
 
-class UserVip extends Model {}
-UserVip.init({
+class UserResource extends Model {
+    /**
+     * 购买tts
+     */
+    static async addPayTTS(uid, amounts) {
+        const userResource = await UserResource.findByPk(uid);
+
+        if (userResource) {
+            return await userResource.update(
+                {ttsPay: userResource.ttsPay + amounts},
+            );
+        } else {
+            return await UserResource.create({uid, ttsPay: amounts});
+        }
+    }
+
+    /**
+     * 免费tts
+     */
+    static async addFreeTTS(uid, amounts) {
+        const userResource = await UserResource.findByPk(uid);
+
+        if (userResource) {
+            return await userResource.update(
+                {ttsPay: userResource.ttsFree + amounts},
+            );
+        } else {
+            return await UserResource.create({uid, ttsFree: amounts});
+        }
+    }
+
+    /**
+     * 消费TTS，优先消费免费TTS
+     */
+    static async consumeTTS(uid, amounts) {
+        const userResource = await UserResource.findByPk(uid);
+
+        if (!userResource) {
+            await UserResource.create({
+                uid: uid,
+                ttsFree: 10000,
+            });
+        }
+
+        if (userResource.ttsFree === 0 && userResource.tssPay === 0) {
+            throw new TTSError();
+        }
+
+        // 消费tts数量
+        const ttsFree = userResource.ttsFree - amounts;
+        let ttsPay = userResource.ttsPay;
+        if (ttsFree < 0) {
+            ttsPay = ttsPay + ttsFree;
+        }
+        await userResource.update({
+            ttsFree: ttsFree < 0 ? 0 : ttsFree,
+            ttsPay: ttsPay < 0 ? 0 : ttsPay,
+        });
+        return userResource;
+    }
+}
+UserResource.init({
     uvid: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -138,6 +200,18 @@ UserVip.init({
         allowNull: false,
         comment: 'uid',
     },
+    ttsPay: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: '购买的TTS数量',
+    },
+    ttsFree: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 10000,
+        comment: '免费的TTS数量',
+    },
 }, {
     indexes: [{
         fields: ['uid'],
@@ -146,9 +220,50 @@ UserVip.init({
     sequelize: db,
     comment: '用户验证码',
 });
-UserVip.sync({alter: true});
+UserResource.sync({alter: true});
+
+class UserToday extends Model {
+    static async addToday(uid) {
+        const date = moment().format('YYYY-MM-DD');
+        const userToday = await UserToday.findOne({
+            where: {uid, date},
+        });
+        if (userToday) {
+            throw new TodayError();
+        } else {
+            await UserToday.create({uid, date});
+        }
+    }
+}
+UserToday.init({
+    utid: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+    },
+    uid: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        comment: 'uid',
+    },
+    date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        comment: '签到日期',
+    },
+}, {
+    indexes: [{
+        fields: ['uid', 'date'],
+        unique: true,
+    }],
+    sequelize: db,
+    comment: '签到表',
+});
+UserToday.sync({alert: true});
 
 module.exports = {
     User,
     UserCode,
+    UserResource,
+    UserToday,
 };

@@ -51,6 +51,39 @@ async function sendMessageCode(phoneNumber, code) {
     return true;
 }
 
+async function tts(options) {
+    const TtsClient = tencentcloud.tts.v20190823.Client;
+
+    const clientConfig = {
+        credential: {
+            secretId,
+            secretKey,
+        },
+        region: 'ap-guangzhou',
+        profile: {
+            httpProfile: {
+                endpoint: 'tts.tencentcloudapi.com',
+            },
+        },
+    };
+
+    const client = new TtsClient(clientConfig);
+    const Volume = options.volumn && options.volumn / 10;
+    const Speed = options.Speed && options.Speed / 100;
+    const VoiceType = options.voice;
+    const Text = options.text;
+    const params = {
+        Volume,
+        Speed,
+        VoiceType,
+        Text,
+        'SessionId': Text,
+    };
+
+    return await client.TextToVoice(params);
+}
+
 module.exports = {
     sendMessageCode,
+    tts,
 };

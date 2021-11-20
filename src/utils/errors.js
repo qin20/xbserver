@@ -55,3 +55,27 @@ exports.ClientParamsError = class ClientParamsError extends BaseError {
         };
     };
 };
+
+/**
+ * 请求参数错误
+ */
+exports.TTSError = class TTSError extends BaseError {
+    get defaults() {
+        return {
+            status: 403,
+            msg: '余额不足',
+        };
+    };
+};
+
+/**
+ * 签到错误
+ */
+exports.TodayError = class TodayError extends BaseError {
+    get defaults() {
+        return {
+            status: 400,
+            msg: '你今天已经签到过了',
+        };
+    };
+};
