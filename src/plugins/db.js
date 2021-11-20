@@ -7,6 +7,5 @@ module.exports = async (fastify, options, done) => {
     } catch (error) {
         done(`Unable to connect to the database: ${error}`);
     }
-
     done();
 };

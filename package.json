@@ -9,12 +9,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cls-hooked": "^4.2.2",
     "fastify": "^3.24.0",
     "fastify-jwt": "^3.2.1",
     "mysql2": "^2.3.3",
     "pino": "^7.3.0",
     "pino-pretty": "^7.2.0",
-    "sequelize": "^6.9.0"
+    "sequelize": "^6.9.0",
+    "tencentcloud-sdk-nodejs": "^4.0.240"
   },
   "devDependencies": {
     "eslint": "^8.2.0",

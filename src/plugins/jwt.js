@@ -1,18 +1,23 @@
-const jwt = require('fastify-jwt');
+const app = require('../app');
+const {AuthenticateError} = require('../utils/errors');
+const {User} = require('../models');
 
-module.exports = (fastify, options, done) => {
-    fastify.register(jwt, {
-        secret: 'bieyang-xiaobai_!^^%L',
+app.register(require('fastify-jwt'), {
+    secret: 'bieyang-xiaobai_!^^%L',
+    sign: {
         expiresIn: '1d',
-    });
+    },
+});
 
-    fastify.decorate('authenticate', async function(request, reply) {
-        try {
-            await request.jwtVerify();
-        } catch (err) {
-            reply.send(err);
+app.decorate('authenticate', async function(request, reply) {
+    try {
+        await request.jwtVerify();
+        const token = request.headers['authorization'].replace('Bearer ', '');
+        const valid = await User.verifyPhoneToken(request.user, token);
+        if (!valid) {
+            throw new new AuthenticateError();
         }
-    });
-
-    done();
-};
+    } catch (err) {
+        reply.send(new AuthenticateError({error: err}));
+    }
+});

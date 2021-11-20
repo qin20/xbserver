@@ -1,18 +1,32 @@
-GET http://127.0.0.1:3000/register HTTP/1.1
-
-
-###
-POST sms.tencentcloudapi.com HTTP/1.1
+### 登录
+# @name login
+post http://127.0.0.1:3000/phone_login HTTP/1.1
 Content-Type: application/json
-X-TC-Action: SendSms
 
 {
-    "Action": "SendSms",
-    "version": "2019-07-11",
-    "PhoneNumberSet": [
-        "+8617819827791"
-    ],
-    "SmsSdkAppId": "1400598104",
-    "SignName": "平南县别样传媒工作室",
-    "TemplateId": "420464",
+    "phone": "+8617819827791",
+    "code": "123123"
+}
+
+### 注销
+post http://127.0.0.1:3000/logout HTTP/1.1
+authorization: Bearer {{login.response.body.token}}
+
+
+### 验证是否登录
+get http://127.0.0.1:3000/logined HTTP/1.1
+Content-Type: application/json
+authorization: Bearer {{login.response.body.token}}
+
+{
+    "phone": "+8617819827791",
+    "code": "123123"
+}
+
+### 发送验证码
+post http://127.0.0.1:3000/send_code HTTP/1.1
+Content-Type: application/json
+
+{
+    "phone": "+8617819827791"
 }

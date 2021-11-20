@@ -19,7 +19,7 @@
     },
     "rules": {
         "new-cap": ["error", { "capIsNew": false }],
-        "no-unused-vars": "error",
+        "no-unused-vars": ["error", {"ignoreRestSiblings": true, "args": "none"}],
         "no-undef": "error",
         "indent": ["error", 4],
         "require-jsdoc": "off",

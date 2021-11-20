@@ -1,5 +1,7 @@
 // Depends on tencentcloud-sdk-nodejs version 4.0.3 or higher
 const tencentcloud = require('tencentcloud-sdk-nodejs');
+const {BaseError} = require('../utils/errors');
+const app = require('../app');
 
 const secretId = 'AKIDnQntiFWWEfqkMhmZ5JGwLTKwHK6crpWw';
 const secretKey = 'B4g15sNbYEcjY7PRBeqlOlrfCRQ8YhZA';
@@ -24,7 +26,7 @@ async function sendMessageCode(phoneNumber, code) {
     };
 
     const client = new SmsClient(clientConfig);
-    const phNumber = phoneNumber.startWith('+86')
+    const phNumber = phoneNumber.startsWith('+86')
         ? phoneNumber
         : `+86${phoneNumber}`;
     const params = {
@@ -39,7 +41,14 @@ async function sendMessageCode(phoneNumber, code) {
         ],
     };
 
-    return await client.SendSms(params);
+    app.log.info(`开始发送验证码: ${JSON.stringify(params)}`);
+    const resp = await client.SendSms(params);
+
+    if (!resp.SendStatusSet[0].SerialNo) {
+        throw new BaseError({msg: '验证码发送失败', error: resp, status: 500});
+    }
+
+    return true;
 }
 
 module.exports = {
