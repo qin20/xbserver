@@ -26,9 +26,9 @@ exports.BaseError = BaseError;
 exports.AuthenticateError = class AuthenticateError extends BaseError {
     get defaults() {
         return {
+            code: -2,
             msg: '请登录',
             status: 403,
-            data: -2,
         };
     };
 };
@@ -76,6 +76,18 @@ exports.TodayError = class TodayError extends BaseError {
         return {
             status: 400,
             msg: '你今天已经签到过了',
+        };
+    };
+};
+
+/**
+ * 验证码过期
+ */
+exports.CodeOutDateError = class CodeOutDateError extends BaseError {
+    get defaults() {
+        return {
+            status: 400,
+            msg: '验证码已过期，请重新获取',
         };
     };
 };

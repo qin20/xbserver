@@ -6,8 +6,10 @@ module.exports = (error, request, reply) => {
     if (error instanceof BaseError) {
         const {defaults, ...filterError} = error;
         app.log.error(filterError);
-        reply.status(error.status || 400).send({
-            msg: error.msg, data: error.data,
+        reply.status(200).send({
+            code: error.code || -1,
+            status: error.status || 400,
+            message: error.msg, data: error.data,
         });
         return;
     }

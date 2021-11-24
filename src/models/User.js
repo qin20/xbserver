@@ -1,7 +1,7 @@
 const moment = require('moment');
 const {Sequelize, DataTypes, Model} = require('sequelize');
 const db = require('./db');
-const {TTSError, TodayError} = require('../utils/errors');
+const {TTSError, TodayError, CodeOutDateError} = require('../utils/errors');
 
 const User = class User extends Model {
     static async verifyPhoneToken(user, token) {
@@ -89,15 +89,18 @@ const UserCode = class UserCode extends Model {
         return true;
         const userCode = await UserCode.findOne({
             attributes: [
-                [Sequelize.fn('UNIX_TIMESTAMP', Sequelize.col('createdAt')), 'createdAt'],
+                [Sequelize.fn('UNIX_TIMESTAMP', Sequelize.col('updatedAt')), 'updatedAt'],
                 [Sequelize.fn('UNIX_TIMESTAMP', Sequelize.fn('CURRENT_TIMESTAMP')), 'now'],
             ],
             where: {phone, code},
+            raw: true,
         });
-
         // 上一次发送的间隔时间
         if (userCode) {
-            return userCode.now - userCode.createdAt < 60;
+            if (userCode.now - userCode.updatedAt < 60) {
+                return true;
+            }
+            throw new CodeOutDateError();
         }
         return false;
     }

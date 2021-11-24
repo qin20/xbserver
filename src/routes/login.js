@@ -5,7 +5,7 @@ const app = require('../app');
 const validators = require('../utils/validators');
 const {ClientParamsError} = require('../utils/errors');
 
-app.post('/send_code', async (request, reply) => {
+app.post('/send_code', async (request) => {
     const body = request.body || {};
     const phone = body.phone;
 
