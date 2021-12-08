@@ -54,7 +54,7 @@ function validateResource(type) {
     }
 }
 
-function validateTTSAmounts(amounts) {
+function validatePointsAmounts(amounts) {
     if (!amounts) {
         throw new ClientParamsError('缺少参数[amounts]');
     }
@@ -69,5 +69,5 @@ module.exports = {
     validateVerifyCode,
     validateTTSType,
     validateResource,
-    validateTTSAmounts,
+    validatePointsAmounts,
 };

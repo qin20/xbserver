@@ -5,16 +5,20 @@ const alicloud = require('../services/alicloud');
 const tencentcloud = require('../services/tencentcloud');
 const db = require('../models/db');
 
-app.get('/tts', {preValidation: [app.authenticate]}, async (request) => {
-    const {type, ...params} = request.query;
-    validators.validateTTSType(type);
+app.get('/tts', {logLevel: 'warn', preValidation: [app.authenticate]}, async (request, reply) => {
+    const {api, ...params} = request.query;
+    validators.validateTTSType(api);
 
     return await db.transaction(async () => {
-        await UserResource.consumeTTS(request.user.uid, params.text.length);
-        if (type === 'ten') {
-            return await tencentcloud.tts(params);
-        } else if (type === 'ali') {
-            return await alicloud.tts(params);
+        await UserResource.consumePoints(request.user.uid, params.text.length);
+        let resp;
+        if (api === 'ten') {
+            resp = await tencentcloud.tts(params);
+        } else if (api === 'ali') {
+            resp = await alicloud.tts(params);
         }
+        reply.type(resp.headers['content-type']);
+        reply.header('content-length', resp.body.length);
+        return resp.body;
     });
 });

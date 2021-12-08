@@ -1,9 +1,10 @@
 const tencentcloud = require('../services/tencentcloud');
-const {User, UserCode} = require('../models');
+const {User, UserCode, UserToken, UserResource} = require('../models');
 const db = require('../models/db');
 const app = require('../app');
 const validators = require('../utils/validators');
 const {ClientParamsError} = require('../utils/errors');
+const {serilizeIP} = require('../utils/ip');
 
 app.post('/send_code', async (request) => {
     const body = request.body || {};
@@ -37,13 +38,21 @@ app.post('/phone_login', async (request, reply) => {
     const valid = await UserCode.verifyCode(phone, code);
     if (valid) {
         let user = await User.findOne({where: {phone}});
-        if (!user) {
-            user = await User.create({phone});
-        }
-        const {token: _, ...userinfo} = user.toJSON();
-        const token = app.jwt.sign(userinfo);
-        await user.update({token});
-        return {token, user: userinfo};
+
+        return await db.transaction(async () => {
+            if (!user) {
+                user = await User.create({phone});
+                await UserToken.create({uid: user.uid});
+                await UserResource.create({uid: user.uid});
+            }
+            const {uid} = user.toJSON();
+            const token = app.jwt.sign({
+                uid: uid,
+                ip: serilizeIP(request.ip),
+            });
+            await UserToken.update({token}, {where: {uid}});
+            return {data: await User.getUserInfo(uid)};
+        });
     } else {
         throw new ClientParamsError('验证码不正确');
     }

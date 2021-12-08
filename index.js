@@ -12,7 +12,7 @@ require('./src/routes/video');
 // 接口包装
 app.setErrorHandler(require('./src/utils/errorsHandlers'));
 app.addHook('onSend', function(request, reply, payload, next) {
-    if (reply.statusCode === 200) {
+    if (reply.statusCode === 200 && typeof payload === 'string') {
         let pl;
         try {
             pl = JSON.parse(payload);

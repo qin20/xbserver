@@ -1,17 +1,34 @@
 const moment = require('moment');
 const {Sequelize, DataTypes, Model} = require('sequelize');
 const db = require('./db');
-const {TTSError, TodayError, CodeOutDateError} = require('../utils/errors');
+const {PointsError, TodayError, CodeOutDateError} = require('../utils/errors');
 
 const User = class User extends Model {
     static async verifyPhoneToken(user, token) {
-        const u = await User.findByPk(user.uid, {attributes: ['token']});
-        return u && u.token && u.token === token;
+        const u = await User.findByPk(user.uid);
+        const userToken = await UserToken.findByPk(user.uid);
+        return !!(u && userToken && userToken.token === token);
     }
 
     static async logout(user) {
-        const success = await User.update({token: ''}, {where: {uid: user.uid}});
+        const success = await UserToken.update({token: ''}, {where: {uid: user.uid}});
         return !!success;
+    }
+
+    static async getUserInfo(uid) {
+        const user = await User.findByPk(uid, {raw: true});
+        const resource = await UserResource.findByPk(uid, {raw: true});
+        const token = await UserToken.findByPk(uid, {raw: true});
+        const today = await UserToday.todayed(uid);
+
+        return {
+            uid: user.uid,
+            phone: user.phone,
+            pointsFree: resource.pointsFree,
+            pointsPay: resource.pointsPay,
+            token: token.token,
+            today,
+        };
     }
 };
 User.init({
@@ -26,10 +43,6 @@ User.init({
         allowNull: false,
         comment: '手机号码',
     },
-    token: {
-        type: DataTypes.STRING(500),
-        comment: 'jwt token',
-    },
     lastLogin: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -40,13 +53,47 @@ User.init({
     comment: '用户表',
     sequelize: db,
     indexes: [{
-        fields: ['token'],
-    }, {
         fields: ['phone'],
         unique: true,
     }],
 });
 User.sync({alter: true});
+
+const UserToken = class UserToken extends Model {
+    static async verifyPhoneToken(user, token) {
+        const u = await UserToken.findByPk(user.uid, {attributes: ['token']});
+        return u && u.token && u.token === token;
+    }
+
+    static async logout(user) {
+        const success = await User.update({token: ''}, {where: {uid: user.uid}});
+        return !!success;
+    }
+};
+UserToken.init({
+    utid: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+    },
+    uid: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        comment: 'uid',
+    },
+    token: {
+        type: DataTypes.STRING(500),
+        comment: 'jwt token',
+    },
+}, {
+    comment: '用户token表',
+    sequelize: db,
+    indexes: [{
+        fields: ['token'],
+        unique: true,
+    }],
+});
+UserToken.sync({alter: true});
 
 const UserCode = class UserCode extends Model {
     /**
@@ -141,67 +188,50 @@ class UserResource extends Model {
     }
 
     /**
-     * 购买tts
+     * 购买points
      */
-    static async addPayTTS(uid, amounts) {
-        const userResource = await UserResource.ensureCreate(uid);
-
-        if (userResource) {
-            return await userResource.update(
-                {ttsPay: userResource.ttsPay + amounts},
-            );
-        } else {
-            return await UserResource.create({uid, ttsPay: amounts});
-        }
+    static async addPayPoints(uid, amounts) {
+        const userResource = await UserResource.findOne({where: {uid}});
+        return await userResource.update(
+            {pointsPay: userResource.pointsPay + amounts},
+        );
     }
 
     /**
-     * 免费tts
+     * 免费points
      */
-    static async addFreeTTS(uid, amounts) {
-        const userResource = await UserResource.ensureCreate(uid);
-
-        if (userResource) {
-            return await userResource.update(
-                {ttsFree: userResource.ttsFree + amounts},
-            );
-        } else {
-            return await UserResource.create({uid, ttsFree: amounts});
-        }
+    static async addFreePoints(uid, amounts) {
+        const userResource = await UserResource.findOne({where: {uid}});
+        return await userResource.update(
+            {pointsFree: userResource.pointsFree + amounts},
+        );
     }
 
     /**
-     * 消费TTS，优先消费免费TTS
+     * 消费Points，优先消费免费Points
      */
-    static async consumeTTS(uid, amounts) {
-        const userResource = await UserResource.ensureCreate(uid);
+    static async consumePoints(uid, amounts) {
+        const userResource = await UserResource.findOne({where: {uid}});
 
-        if (!userResource) {
-            await UserResource.create({
-                uid: uid,
-                ttsFree: 10000,
-            });
+        if (userResource.pointsFree === 0 && userResource.tssPay === 0) {
+            throw new PointsError();
         }
 
-        if (userResource.ttsFree === 0 && userResource.tssPay === 0) {
-            throw new TTSError();
-        }
-
-        // 消费tts数量
-        const ttsFree = userResource.ttsFree - amounts;
-        let ttsPay = userResource.ttsPay;
-        if (ttsFree < 0) {
-            ttsPay = ttsPay + ttsFree;
+        // 消费points数量
+        const pointsFree = userResource.pointsFree - amounts;
+        let pointsPay = userResource.pointsPay;
+        if (pointsFree < 0) {
+            pointsPay = pointsPay + pointsFree;
         }
         await userResource.update({
-            ttsFree: ttsFree < 0 ? 0 : ttsFree,
-            ttsPay: ttsPay < 0 ? 0 : ttsPay,
+            pointsFree: pointsFree < 0 ? 0 : pointsFree,
+            pointsPay: pointsPay < 0 ? 0 : pointsPay,
         });
         return userResource;
     }
 }
 UserResource.init({
-    uvid: {
+    urid: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -211,17 +241,17 @@ UserResource.init({
         allowNull: false,
         comment: 'uid',
     },
-    ttsPay: {
+    pointsPay: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
-        comment: '购买的TTS数量',
+        comment: '购买的Points数量',
     },
-    ttsFree: {
+    pointsFree: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 10000,
-        comment: '免费的TTS数量',
+        comment: '免费的Points数量',
     },
 }, {
     indexes: [{
@@ -234,15 +264,23 @@ UserResource.init({
 UserResource.sync({alter: true});
 
 class UserToday extends Model {
-    static async addToday(uid) {
-        const date = moment().format('YYYY-MM-DD');
+    /**
+     * 今天是否已经签到
+     */
+    static async todayed(uid, date) {
+        date = date || moment().format('YYYY-MM-DD');
         const userToday = await UserToday.findOne({
             where: {uid, date},
         });
-        if (userToday) {
+        return !!userToday;
+    }
+
+    static async addToday(uid) {
+        const today = moment().format('YYYY-MM-DD');
+        if (await UserToday.todayed(uid, today)) {
             throw new TodayError();
         } else {
-            await UserToday.create({uid, date});
+            await UserToday.create({uid, date: today});
         }
     }
 }
@@ -277,4 +315,5 @@ module.exports = {
     UserCode,
     UserResource,
     UserToday,
+    UserToken,
 };

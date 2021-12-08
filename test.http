@@ -11,13 +11,13 @@ Content-Type: application/json
 
 ### 注销
 post http://127.0.0.1:32222/logout HTTP/1.1
-authorization: Bearer {{login.response.body.token}}
+authorization: Bearer {{login.response.body.data.token}}
 
 
 ### 验证是否登录
 get http://127.0.0.1:32222/logined HTTP/1.1
 Content-Type: application/json
-authorization: Bearer {{login.response.body.token}}
+authorization: Bearer {{login.response.body.data.token}}
 
 {
     "phone": "+8617819827791",
@@ -36,13 +36,13 @@ Content-Type: application/json
 
 ### 签到
 post http://127.0.0.1:32222/account/today HTTP/1.1
-authorization: Bearer {{login.response.body.token}}
+authorization: Bearer {{login.response.body.data.token}}
 
 
 ### 购买tts包
 post http://127.0.0.1:32222/account/add_resource HTTP/1.1
 Content-Type: application/json
-authorization: Bearer {{login.response.body.token}}
+authorization: Bearer {{login.response.body.data.token}}
 
 {
     "type": "tts",
@@ -53,4 +53,4 @@ authorization: Bearer {{login.response.body.token}}
 ### 合成语音
 get http://127.0.0.1:32222/tts?type=ten&voice=1001&text=你好，我是一个创业者 HTTP/1.1
 Content-Type: application/json
-authorization: Bearer {{login.response.body.token}}
+authorization: Bearer {{login.response.body.data.token}}

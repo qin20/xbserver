@@ -8,7 +8,7 @@ class BaseError extends Error {
         if (typeof err === 'string') {
             err = {msg: err};
         }
-        const {status, msg, error, data} = {
+        const {status, msg, error, data, code} = {
             ...this.defaults,
             ...err,
         };
@@ -16,6 +16,7 @@ class BaseError extends Error {
         this.msg = msg || this.defaults.msg || '发生未知错误';
         this.error = error;
         this.data = data;
+        this.code = code;
     }
 }
 exports.BaseError = BaseError;
@@ -59,7 +60,7 @@ exports.ClientParamsError = class ClientParamsError extends BaseError {
 /**
  * 请求参数错误
  */
-exports.TTSError = class TTSError extends BaseError {
+exports.PointsError = class PointsError extends BaseError {
     get defaults() {
         return {
             status: 403,
