@@ -3,8 +3,8 @@ const tencentcloud = require('tencentcloud-sdk-nodejs');
 const {BaseError} = require('../utils/errors');
 const app = require('../app');
 
-const secretId = 'AKIDnQntiFWWEfqkMhmZ5JGwLTKwHK6crpWw';
-const secretKey = 'B4g15sNbYEcjY7PRBeqlOlrfCRQ8YhZA';
+const secretId = 'test';
+const secretKey = 'test';
 
 /**
  * 发送手机短信验证码
